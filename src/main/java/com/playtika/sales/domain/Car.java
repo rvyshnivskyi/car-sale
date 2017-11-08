@@ -1,8 +1,9 @@
 package com.playtika.sales.domain;
 
 import lombok.Data;
-import lombok.NonNull;
 import org.hibernate.validator.constraints.NotBlank;
+
+import javax.validation.constraints.Min;
 
 @Data
 public class Car {
@@ -11,8 +12,8 @@ public class Car {
     private String brand;
     @NotBlank
     private String color;
-    @NonNull
-    private Integer age;
+    @Min(0)
+    private int age;
     @NotBlank
     private String number;
 }
