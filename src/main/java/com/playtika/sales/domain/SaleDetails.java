@@ -1,18 +1,21 @@
 package com.playtika.sales.domain;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NonNull;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Data
+@AllArgsConstructor
 public class SaleDetails {
-    private double price;
+    @NonNull
+    private Long carId;
+    @NonNull
+    private Double price;
+    @NotBlank
     private String ownerFirstName;
-    private String ownerLastName;
-    private Long ownerPhoneNumber;
+    @NotBlank
+    private String ownerPhoneNumber;
 
-    public SaleDetails(double price, String ownerFirstName, String ownerLastName, Long ownerPhoneNumber) {
-        this.price = price;
-        this.ownerFirstName = ownerFirstName;
-        this.ownerLastName = ownerLastName;
-        this.ownerPhoneNumber = ownerPhoneNumber;
-    }
+    private String ownerLastName;
 }

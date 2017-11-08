@@ -1,29 +1,18 @@
 package com.playtika.sales.domain;
 
 import lombok.Data;
+import lombok.NonNull;
+import org.hibernate.validator.constraints.NotBlank;
 
 @Data
 public class Car {
-    private static int CURRENT_CAR_ID = 0;
-    private int id;
+    private Long id;
+    @NotBlank
     private String brand;
+    @NotBlank
     private String color;
-    private int age;
-    private SaleDetails saleDetails;
-
-    public Car() {
-        this.id = ++CURRENT_CAR_ID;
-    }
-
-    public int getId() {
-        return id;
-    }
-
-    public SaleDetails getSaleDetails() {
-        return saleDetails;
-    }
-
-    public void setSaleDetails(SaleDetails saleDetails) {
-        this.saleDetails = saleDetails;
-    }
+    @NonNull
+    private Integer age;
+    @NotBlank
+    private String number;
 }
