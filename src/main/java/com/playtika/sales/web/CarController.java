@@ -28,7 +28,12 @@ public class CarController {
 					   @RequestParam("firstName") @Valid String ownerFirstName,
 					   @RequestParam("phone") @Valid String ownerPhoneNumber,
 					   @RequestParam(value = "lastName", required = false) String ownerLastName) {
-		Car created = service.addCarForSale(car, new SaleDetails(car.getId(), price, ownerFirstName, ownerPhoneNumber, ownerLastName));
+		SaleDetails sale = new SaleDetails();
+		sale.setPrice(price);
+		sale.setOwnerFirstName(ownerFirstName);
+		sale.setOwnerPhoneNumber(ownerPhoneNumber);
+		sale.setOwnerLastName(ownerLastName);
+		Car created = service.addCarForSale(car, sale);
 		return created.getId();
 	}
 
@@ -52,7 +57,7 @@ public class CarController {
 	}
 
 	@ResponseStatus(HttpStatus.NOT_FOUND)
-	private class CarIdWasNotFoundException extends IllegalArgumentException {
+	public class CarIdWasNotFoundException extends IllegalArgumentException {
 		public CarIdWasNotFoundException(String message) {
 		    super(message);
 		    log.error(message, fillInStackTrace());
