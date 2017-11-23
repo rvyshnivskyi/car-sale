@@ -15,8 +15,7 @@ GROUP BY c.id, c.plate_number, c.brand, c.year, c.color;
 SELECT c.id, c.plate_number, c.brand, c.year, c.color, o.price FROM car c INNER JOIN sale_proposition s
     ON c.id = s.car_id INNER JOIN offer o
     ON s.id = o.sale_proposition_id
-  WHERE o.status = 'Accepted'
-GROUP BY c.id, c.plate_number, c.brand, c.year, c.color, o.price
+  WHERE o.status = 'Accepted' AND s.status = 'Closed'
 ORDER BY o.price DESC
 LIMIT 1;
 
@@ -28,7 +27,7 @@ LIMIT 1;
 SELECT c.year, count(*) as count FROM car c INNER JOIN sale_proposition s
     ON c.id = s.car_id INNER JOIN offer o
     ON s.id = o.sale_proposition_id
-WHERE o.status = 'Accepted'
+WHERE o.status = 'Accepted' AND s.status = 'Closed'
 GROUP BY c.year
 ORDER BY count DESC
 LIMIT 1;
