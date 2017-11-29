@@ -5,13 +5,13 @@ import lombok.*;
 import javax.persistence.*;
 import java.util.Set;
 
-@Data
 @Entity
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 @Table(name = "person")
-@EqualsAndHashCode(exclude = {"cars", "offers"})
 public class PersonEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

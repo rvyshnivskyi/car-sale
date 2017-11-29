@@ -6,11 +6,11 @@ import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
@@ -21,9 +21,10 @@ import static java.util.Optional.of;
 
 @Slf4j
 @Service
+@Transactional
 public class CarServiceImpl implements CarService {
 
-    @PersistenceContext
+    @Autowired
     protected EntityManager em;
 
     public CarServiceImpl(EntityManager entityManager) {
@@ -31,7 +32,6 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    @Transactional
     public Car addCarForSale(Car car, SaleDetails saleDetails) {
         log.debug("Try to insert new Person into the database");
         PersonEntity owner = PersonEntity.builder()
@@ -51,10 +51,10 @@ public class CarServiceImpl implements CarService {
                 .build();
 
         log.debug("Try to insert new SakeProposition into the database");
-        SalePropositionEntity propositionEntity = SalePropositionEntity.builder()
-                .car(carEntity)
-                .price(saleDetails.getPrice())
-                .build();
+        SalePropositionEntity propositionEntity = new SalePropositionEntity();
+        propositionEntity.setCar(carEntity);
+        propositionEntity.setPrice(saleDetails.getPrice());
+
         em.persist(propositionEntity);
 
         car.setId(carEntity.getId());
@@ -62,7 +62,6 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    @Transactional
     public List<Car> getAllCars() {
         Query query = em.createQuery("select c from CarEntity c");
         List<CarEntity> cars = query.getResultList();
@@ -72,7 +71,6 @@ public class CarServiceImpl implements CarService {
     }
 
     @Override
-    @Transactional
     public Optional<SaleDetails> getSaleDetails(long id) {
         Query query = em.createQuery(
                 "select sp from SalePropositionEntity sp inner join fetch sp.car as c " +
@@ -80,18 +78,14 @@ public class CarServiceImpl implements CarService {
         query.setParameter("carId", id);
         query.setParameter("status", SalePropositionEntity.Status.OPEN);
 
-        SalePropositionEntity spe;
         try {
-            spe = (SalePropositionEntity) query.getSingleResult();
+            return of(convertToSaleDetails((SalePropositionEntity)query.getSingleResult()));
         } catch (NoResultException ex) {
             return Optional.empty();
         }
-
-        return of(convertToSaleDetails(spe));
     }
 
     @Override
-    @Transactional
     public boolean deleteSaleDetails(long id) {
         Query query = em.createQuery("delete from SalePropositionEntity sp where " +
                 "sp.car.id = :carId and sp.status = :status");

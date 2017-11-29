@@ -1,17 +1,15 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.*;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Set;
 
-@Data
 @Entity
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 @Table(name = "sale_proposition")
-@EqualsAndHashCode(exclude = {"car", "offers"})
 public class SalePropositionEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

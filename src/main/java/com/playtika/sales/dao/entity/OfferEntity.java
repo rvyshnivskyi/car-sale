@@ -1,25 +1,25 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.sql.Date;
 
-@Data
 @Entity
+@Getter
+@Setter
 @Table(name = "offer")
-@EqualsAndHashCode(exclude = {"sale", "buyer"})
 public class OfferEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
     private Date date;
-    private Double price;
+    private double price;
 
-    @Column(columnDefinition = "ENUM('ACTIVE','ACCEPTED','DECLINED')")
-    @Enumerated(EnumType.STRING)
+    @Column(columnDefinition = "ENUM")
+    @Enumerated(value = EnumType.STRING)
     private Status status;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
