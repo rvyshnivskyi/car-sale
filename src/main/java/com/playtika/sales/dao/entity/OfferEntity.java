@@ -22,11 +22,11 @@ public class OfferEntity {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "sale_proposition_id")
     private SalePropositionEntity sale;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "buyer_id")
     private PersonEntity buyer;
 

@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.ofNullable;
+import static java.util.Optional.of;
 
 @Slf4j
 @Service
@@ -40,7 +40,6 @@ public class CarServiceImpl implements CarService {
                 .phoneNumber(saleDetails.getOwnerPhoneNumber())
                 .city("Default City")
                 .build();
-        em.persist(owner);
 
         log.debug("Try to insert new Car into the database");
         CarEntity carEntity = CarEntity.builder()
@@ -50,7 +49,6 @@ public class CarServiceImpl implements CarService {
                 .year(car.getAge())
                 .plateNumber(car.getNumber())
                 .build();
-        em.persist(carEntity);
 
         log.debug("Try to insert new SakeProposition into the database");
         SalePropositionEntity propositionEntity = SalePropositionEntity.builder()
@@ -59,7 +57,7 @@ public class CarServiceImpl implements CarService {
                 .build();
         em.persist(propositionEntity);
 
-        car.setId(owner.getId());
+        car.setId(carEntity.getId());
         return car;
     }
 
@@ -89,22 +87,19 @@ public class CarServiceImpl implements CarService {
             return Optional.empty();
         }
 
-        return ofNullable(convertToSaleDetails(spe));
+        return of(convertToSaleDetails(spe));
     }
 
     @Override
     @Transactional
     public boolean deleteSaleDetails(long id) {
-        Query query = em.createQuery(
-                "select sp from SalePropositionEntity sp inner join fetch sp.car as c " +
-                        "where c.id = :carId and sp.status = :status");
+        Query query = em.createQuery("delete from SalePropositionEntity sp where " +
+                "sp.car.id = :carId and sp.status = :status");
+
         query.setParameter("carId", id);
         query.setParameter("status", SalePropositionEntity.Status.OPEN);
 
-        try {
-            SalePropositionEntity spe = (SalePropositionEntity) query.getSingleResult();
-            em.remove(spe);
-        } catch (NoResultException ex) {
+        if (query.executeUpdate() == 0){
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }

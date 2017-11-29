@@ -23,7 +23,7 @@ public class SalePropositionEntity {
     @Enumerated(EnumType.STRING)
     private Status status;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "car_id")
     private CarEntity car;
 

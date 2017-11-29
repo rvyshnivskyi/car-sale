@@ -23,7 +23,7 @@ public class CarEntity {
     private Integer year;
     private String color;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "owner_id")
     private PersonEntity owner;
 
