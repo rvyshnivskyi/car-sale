@@ -56,7 +56,7 @@ public class CarRestControllerTest {
                 .thenReturn(returned);
         mockMvc.perform(post("/cars?")
                 .param("price", "0.1")
-                .param("firstName", "firstNAme")
+                .param("firstName", "firstName")
                 .param("phone", "1234")
                 .param("lastName", "lastName")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -119,7 +119,7 @@ public class CarRestControllerTest {
     public void carBrandNotBlankValidation() throws Exception {
         MvcResult result = mockMvc.perform(post("/cars?")
                 .param("price", "0.1")
-                .param("firstName", "firstNAme")
+                .param("firstName", "firstName")
                 .param("phone", "1234")
                 .param("lastName", "lastName")
                 .contentType(APPLICATION_JSON_UTF8)
@@ -171,20 +171,6 @@ public class CarRestControllerTest {
         assertThat(result.getResolvedException().getClass(), typeCompatibleWith(MethodArgumentNotValidException.class));
     }
 
-    @Test
-    public void saleDetailsNotNegativeValidation() throws Exception {
-        MvcResult result = mockMvc.perform(post("/cars?")
-                .param("price", "-0.1")
-                .param("firstName", "firstNAme")
-                .param("phone", "1234")
-                .param("lastName", "lastName")
-                .contentType(APPLICATION_JSON_UTF8)
-                .content(carJSON.toString()))
-                .andExpect(status().isBadRequest())
-                .andReturn();
-        assertThat(result.getResolvedException().getClass(), typeCompatibleWith(MethodArgumentNotValidException.class));
-    }
-
     private Car generateCar(String number) {
         Car car = new Car();
         car.setBrand("BMW");
@@ -196,7 +182,7 @@ public class CarRestControllerTest {
 
     private SaleDetails generateSaleDetails() {
         SaleDetails saleDetails = new SaleDetails();
-        saleDetails.setPrice(0.1);
+        saleDetails.setPrice(0.1d);
         saleDetails.setOwnerFirstName("firstName");
         saleDetails.setOwnerPhoneNumber("1234");
         saleDetails.setOwnerLastName("lastName");
