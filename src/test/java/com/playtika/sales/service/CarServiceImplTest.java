@@ -4,21 +4,35 @@ import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit4.SpringRunner;
 
+import javax.persistence.EntityManager;
 import java.util.List;
 import java.util.Optional;
 
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 
+@RunWith(SpringRunner.class)
+@DataJpaTest
 public class CarServiceImplTest {
-    CarService carService = new CarServiceImpl();
-    private Car firstCar = new Car();
-    private Car secondCar = new Car();
+
+    @Autowired
+    EntityManager em;
+
+    CarService carService;
+
+    Car firstCar = new Car();
+    Car secondCar = new Car();
+    long firstCarId = 0;
 
     @Before
     public void setUp() throws Exception {
-        carService.addCarForSale(firstCar, generateSaleDetails());
+        carService = new CarServiceImpl(em);
+        firstCarId = carService.addCarForSale(firstCar, generateSaleDetails()).getId();
         carService.addCarForSale(secondCar, generateSaleDetails());
     }
 
@@ -50,20 +64,22 @@ public class CarServiceImplTest {
 
     @Test
     public void getCarSaleReturnSaleDetails() {
-        Optional<SaleDetails> result = carService.getSaleDetails(1L);
+        Optional<SaleDetails> result = carService.getSaleDetails(firstCarId);
         assertThat(result.isPresent(), is(true));
-        assertThat(result.get(), equalTo(generateSaleDetails()));
+        SaleDetails expected = generateSaleDetails();
+        expected.setCarId(firstCarId);
+        assertThat(result.get(), equalTo(expected));
     }
 
     @Test
     public void deleteCarDetailsReturnFalseWithNotExistCarId() {
-        boolean result = carService.deleteSaleDetails(0);
+        boolean result = carService.deleteSaleDetails(0L);
         assertThat(result, is(false));
     }
 
     @Test
     public void deleteCarDetailsReturnTrueWithNotExistCarId() {
-        boolean result = carService.deleteSaleDetails(1);
+        boolean result = carService.deleteSaleDetails(firstCarId);
         assertThat(result, is(true));
     }
 
