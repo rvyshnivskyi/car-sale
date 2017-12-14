@@ -1,7 +1,6 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
 import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
@@ -9,8 +8,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Getter
-@Setter
+@Data
 @DynamicInsert
 @Table(name = "sale_proposition")
 public class SalePropositionEntity {
@@ -20,9 +18,8 @@ public class SalePropositionEntity {
 
     private double price;
 
-    @Column(columnDefinition = "ENUM('OPEN','CLOSED')")
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.OPEN;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "car_id")

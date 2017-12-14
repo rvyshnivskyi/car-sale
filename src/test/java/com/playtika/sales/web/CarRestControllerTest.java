@@ -11,6 +11,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@ActiveProfiles("test")
 @RunWith(MockitoJUnitRunner.class)
 public class CarRestControllerTest {
     @Mock
@@ -50,8 +52,7 @@ public class CarRestControllerTest {
     @Test
     public void addCarReturnsCarId() throws Exception {
         String number = "1";
-        Car returned = generateCar(number);
-        returned.setId(1L);
+        Car returned = generateCarWithId(number, 1);
         when(service.addCarForSale(generateCar(number), generateSaleDetails()))
                 .thenReturn(returned);
         mockMvc.perform(post("/cars?")
@@ -172,21 +173,28 @@ public class CarRestControllerTest {
     }
 
     private Car generateCar(String number) {
-        Car car = new Car();
-        car.setBrand("BMW");
-        car.setNumber(number);
-        car.setColor("red");
-        car.setAge(3);
-        return car;
+        return Car.builder()
+                .brand("BMW")
+                .number(number)
+                .color("red")
+                .age(3).build();
+    }
+
+    private Car generateCarWithId(String number, long id) {
+        return Car.builder()
+                .id(id)
+                .brand("BMW")
+                .number(number)
+                .color("red")
+                .age(3).build();
     }
 
     private SaleDetails generateSaleDetails() {
-        SaleDetails saleDetails = new SaleDetails();
-        saleDetails.setPrice(0.1d);
-        saleDetails.setOwnerFirstName("firstName");
-        saleDetails.setOwnerPhoneNumber("1234");
-        saleDetails.setOwnerLastName("lastName");
-        return saleDetails;
+        return SaleDetails.builder()
+                .price(0.1d)
+                .ownerFirstName("firstName")
+                .ownerPhoneNumber("1234")
+                .ownerLastName("lastName").build();
     }
 
     private String getCarJSON(final String number) throws JSONException {

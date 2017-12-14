@@ -63,12 +63,12 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(sp -> convertToSaleDetails(sp)).findFirst();
+        return salePropDao.findByCar_IdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(sp -> convertToSaleDetails(sp)).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
+        if (salePropDao.deleteByCar_IdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }
@@ -77,22 +77,20 @@ public class CarServiceImpl implements CarService {
     }
 
     private Car convertToCar(CarEntity ce) {
-        Car car = new Car();
-        car.setId(ce.getId());
-        car.setAge(ce.getYear());
-        car.setBrand(ce.getBrand());
-        car.setNumber(ce.getPlateNumber());
-        car.setColor(ce.getColor());
-        return car;
+        return Car.builder()
+                .id(ce.getId())
+                .age(ce.getYear())
+                .brand(ce.getBrand())
+                .number(ce.getPlateNumber())
+                .color(ce.getColor()).build();
     }
 
     private SaleDetails convertToSaleDetails(SalePropositionEntity spe) {
-        SaleDetails sd = new SaleDetails();
-        sd.setCarId(spe.getCar().getId());
-        sd.setOwnerPhoneNumber(spe.getCar().getOwner().getPhoneNumber());
-        sd.setOwnerFirstName(spe.getCar().getOwner().getFirstName());
-        sd.setOwnerLastName(spe.getCar().getOwner().getLastName());
-        sd.setPrice(spe.getPrice());
-        return sd;
+        return SaleDetails.builder()
+                .carId(spe.getCar().getId())
+                .ownerPhoneNumber(spe.getCar().getOwner().getPhoneNumber())
+                .ownerFirstName(spe.getCar().getOwner().getFirstName())
+                .ownerLastName(spe.getCar().getOwner().getLastName())
+                .price(spe.getPrice()).build();
     }
 }

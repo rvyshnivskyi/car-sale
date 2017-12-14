@@ -32,11 +32,11 @@ public class CarController {
 					   @RequestParam("firstName") String ownerFirstName,
 					   @RequestParam("phone") String ownerPhoneNumber,
 					   @RequestParam(value = "lastName", required = false) String ownerLastName) {
-		SaleDetails sale = new SaleDetails();
-		sale.setPrice(price);
-		sale.setOwnerFirstName(ownerFirstName);
-		sale.setOwnerPhoneNumber(ownerPhoneNumber);
-		sale.setOwnerLastName(ownerLastName);
+		SaleDetails sale = SaleDetails.builder()
+				.price(price)
+				.ownerFirstName(ownerFirstName)
+				.ownerPhoneNumber(ownerPhoneNumber)
+				.ownerLastName(ownerLastName).build();
 		Car created = service.addCarForSale(car, sale);
 		return created.getId();
 	}

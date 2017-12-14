@@ -1,16 +1,19 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
 @Builder
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@Getter
-@Setter
+@NoArgsConstructor
 @Table(name = "person")
 public class PersonEntity {
     @Id
@@ -23,8 +26,8 @@ public class PersonEntity {
     private String phoneNumber;
 
     @OneToMany(mappedBy = "owner")
-    private Set<CarEntity> cars;
+    private Set<CarEntity> cars = new HashSet<>();
 
     @OneToMany(mappedBy = "buyer")
-    private Set<OfferEntity> offers;
+    private Set<OfferEntity> offers = new HashSet<>();
 }

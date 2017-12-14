@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
 public interface SalePropositionDao extends JpaRepository<SalePropositionEntity, Long> {
-    List<SalePropositionEntity> findByCarIdAndStatus(Long carId, SalePropositionEntity.Status status);
+    List<SalePropositionEntity> findByCar_IdAndStatus(Long carId, SalePropositionEntity.Status status);
 
-    int deleteByCarIdAndStatus(Long carId, SalePropositionEntity.Status status);
+    int deleteByCar_IdAndStatus(Long carId, SalePropositionEntity.Status status);
 }

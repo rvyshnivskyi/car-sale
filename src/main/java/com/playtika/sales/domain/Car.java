@@ -1,13 +1,13 @@
 package com.playtika.sales.domain;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.hibernate.validator.constraints.NotBlank;
+import lombok.Builder;
+import lombok.Value;
 
 import javax.validation.constraints.Min;
+import javax.validation.constraints.NotBlank;
 
-@Data
-@EqualsAndHashCode(exclude = "id")
+@Value
+@Builder
 public class Car {
     private Long id;
     @NotBlank

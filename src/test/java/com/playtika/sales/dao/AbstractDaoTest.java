@@ -1,36 +1,23 @@
 package com.playtika.sales.dao;
 
-import com.github.database.rider.core.DBUnitRule;
-import org.junit.Before;
-import org.junit.Rule;
+import com.github.springtestdbunit.DbUnitTestExecutionListener;
+import com.github.springtestdbunit.TransactionDbUnitTestExecutionListener;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
-import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.junit4.SpringRunner;
-
-import java.sql.Connection;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 
 @RunWith(SpringRunner.class)
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@ActiveProfiles("test")
+@TestExecutionListeners(listeners = {DbUnitTestExecutionListener.class, DependencyInjectionTestExecutionListener.class, TransactionDbUnitTestExecutionListener.class})
 public abstract class AbstractDaoTest<D> {
 
     @Autowired
-    protected JdbcTemplate jdbcTemplate;
-
-    @Rule
-    public DBUnitRule dbUnitRule = DBUnitRule.instance(() -> {
-        Connection connection = jdbcTemplate.getDataSource().getConnection();
-        return connection;
-    });
-
-    @Autowired
     protected D dao;
-
-    @Before
-    public void setUp() throws Exception {
-        System.out.println("sadsda");
-    }
 }

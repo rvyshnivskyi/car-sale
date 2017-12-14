@@ -4,6 +4,5 @@
     <car id="2" owner_id="13" plate_number="AA3295BB" brand="BMW" year="2003" color="red"/>
     <car id="4" owner_id="12" plate_number="AA3296BB" brand="Audi" year="2009" color="yellow"/>
     <sale_proposition id="5" car_id="2" price="123.4" status="OPEN"/>
-    <sale_proposition id="6" car_id="4" price="2000" status="OPEN"/>
     <offer/>
 </dataset>

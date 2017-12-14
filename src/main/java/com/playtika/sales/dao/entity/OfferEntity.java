@@ -1,15 +1,15 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Date;
 
 @Entity
-@Getter
-@Setter
+@Data
+@NoArgsConstructor
 @DynamicInsert
 @Table(name = "offer")
 public class OfferEntity {
@@ -20,7 +20,6 @@ public class OfferEntity {
     private Date date;
     private double price;
 
-    @Column(columnDefinition = "ENUM('ACTIVE','ACCEPTED','DECLINED'")
     @Enumerated(value = EnumType.STRING)
     private Status status = Status.ACTIVE;
 
