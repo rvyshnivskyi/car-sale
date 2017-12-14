@@ -1,6 +1,6 @@
 DROP DATABASE car_sales_db;
 CREATE DATABASE car_sales_db;
---USE car_sales_db;
+USE car_sales_db;
 
 ###################################
 ###    Table person
