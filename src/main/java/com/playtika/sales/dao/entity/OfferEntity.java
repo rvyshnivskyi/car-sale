@@ -2,6 +2,7 @@ package com.playtika.sales.dao.entity;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.DynamicInsert;
 
 import javax.persistence.*;
 import java.sql.Date;
@@ -9,6 +10,7 @@ import java.sql.Date;
 @Entity
 @Getter
 @Setter
+@DynamicInsert
 @Table(name = "offer")
 public class OfferEntity {
     @Id
@@ -18,9 +20,9 @@ public class OfferEntity {
     private Date date;
     private double price;
 
-    @Column(columnDefinition = "ENUM")
+    @Column(columnDefinition = "ENUM('ACTIVE','ACCEPTED','DECLINED'")
     @Enumerated(value = EnumType.STRING)
-    private Status status;
+    private Status status = Status.ACTIVE;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "sale_proposition_id")
@@ -30,7 +32,9 @@ public class OfferEntity {
     @JoinColumn(name = "buyer_id")
     private PersonEntity buyer;
 
-    public static enum Status {
-        ACTIVE, ACCEPTED, DECLINED;
+    public enum Status {
+        ACTIVE,
+        ACCEPTED,
+        DECLINED
     }
 }

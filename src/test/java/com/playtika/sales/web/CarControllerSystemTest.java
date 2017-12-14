@@ -12,8 +12,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
-import org.springframework.stereotype.Component;
-import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -27,7 +25,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ContextConfiguration(classes = CarControllerSystemTest.TestConfigurationContext.class)
 public class CarControllerSystemTest {
     @Autowired
     WebApplicationContext context;
@@ -51,16 +48,20 @@ public class CarControllerSystemTest {
 
     @Test
     public void addCarReturnCreatedCarId() throws Exception {
+        Long maxExistId = context.getBean(CarService.class)
+                .getAllCars().stream()
+                .mapToLong(Car::getId)
+                .max().getAsLong();
         Long result = Long.valueOf(
                 mockMvc.perform(post("/cars?price=0.1&firstName=firstName&phone=1234&lastName=lastName")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(getCarJSON("3")))
+                        .content(getCarJSON("4")))
                         .andExpect(status().isOk())
                         .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
                         .andReturn()
                         .getResponse()
                         .getContentAsString());
-        assertThat(result, greaterThan(2L));
+        assertThat(result, greaterThan(maxExistId));
         context.getBean(CarService.class).deleteSaleDetails(result);
     }
 
@@ -82,17 +83,21 @@ public class CarControllerSystemTest {
 
     @Test
     public void deleteCarById() throws Exception {
-        mockMvc.perform(delete("/cars/2"))
+        Long maxExistId = context.getBean(CarService.class)
+                .getAllCars().stream()
+                .mapToLong(Car::getId)
+                .max().getAsLong();
+        mockMvc.perform(delete("/cars/" + maxExistId))
                 .andExpect(status().isOk());
         context.getBean(CarService.class)
-                .addCarForSale(generateCar("2"), generateSaleDetails());
+                .addCarForSale(generateCar("3"), generateSaleDetails());
     }
 
     private String getCarJSON(final String number) {
-        return "{\"brand\":\"BMW\",\"color\":\"red\",\"age\":3,\"number\":\"" + number + "\"}";
+        return "{\"brand\":\"BMW\",\"color\":\"red\",\"age\":2009,\"number\":\"" + number + "\"}";
     }
 
-    @Component
+
     public static class DemoRunner implements CommandLineRunner {
         @Autowired
         private CarService carService;
@@ -109,7 +114,7 @@ public class CarControllerSystemTest {
         car.setBrand("BMW");
         car.setNumber(number);
         car.setColor("red");
-        car.setAge(3);
+        car.setAge(2009);
         return car;
     }
 

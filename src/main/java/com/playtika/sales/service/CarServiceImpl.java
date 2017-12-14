@@ -1,34 +1,31 @@
 package com.playtika.sales.service;
 
+import com.playtika.sales.dao.CarDao;
+import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.dao.entity.CarEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import static java.util.Optional.of;
 
 @Slf4j
 @Service
 @Transactional
 public class CarServiceImpl implements CarService {
 
-    @Autowired
-    protected EntityManager em;
+    private CarDao carDao;
+    private SalePropositionDao salePropDao;
 
-    public CarServiceImpl(EntityManager entityManager) {
-        em = entityManager;
+    public CarServiceImpl(CarDao carDao, SalePropositionDao salePropDao) {
+        this.carDao = carDao;
+        this.salePropDao = salePropDao;
     }
 
     @Override
@@ -38,7 +35,6 @@ public class CarServiceImpl implements CarService {
                 .firstName(saleDetails.getOwnerFirstName())
                 .lastName(saleDetails.getOwnerLastName())
                 .phoneNumber(saleDetails.getOwnerPhoneNumber())
-                .city("Default City")
                 .build();
 
         log.debug("Try to insert new Car into the database");
@@ -50,50 +46,29 @@ public class CarServiceImpl implements CarService {
                 .plateNumber(car.getNumber())
                 .build();
 
-        log.debug("Try to insert new SakeProposition into the database");
+        log.debug("Try to insert new SaleProposition into the database");
         SalePropositionEntity propositionEntity = new SalePropositionEntity();
         propositionEntity.setCar(carEntity);
         propositionEntity.setPrice(saleDetails.getPrice());
 
-        em.persist(propositionEntity);
-
-        car.setId(carEntity.getId());
-        return car;
+        return convertToCar(salePropDao.save(propositionEntity).getCar());
     }
 
     @Override
     public List<Car> getAllCars() {
-        Query query = em.createQuery("select c from CarEntity c");
-        List<CarEntity> cars = query.getResultList();
-        return cars.stream()
+        return carDao.findAll().stream()
                 .map(this::convertToCar)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        Query query = em.createQuery(
-                "select sp from SalePropositionEntity sp inner join fetch sp.car as c " +
-                "where c.id = :carId and sp.status = :status");
-        query.setParameter("carId", id);
-        query.setParameter("status", SalePropositionEntity.Status.OPEN);
-
-        try {
-            return of(convertToSaleDetails((SalePropositionEntity)query.getSingleResult()));
-        } catch (NoResultException ex) {
-            return Optional.empty();
-        }
+        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(sp -> convertToSaleDetails(sp)).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        Query query = em.createQuery("delete from SalePropositionEntity sp where " +
-                "sp.car.id = :carId and sp.status = :status");
-
-        query.setParameter("carId", id);
-        query.setParameter("status", SalePropositionEntity.Status.OPEN);
-
-        if (query.executeUpdate() == 0){
+        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }

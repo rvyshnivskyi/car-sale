@@ -23,7 +23,7 @@ public class CarEntity {
     private String color;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "owner_id")
+    @JoinColumn(name = "owner_id", foreignKey = @ForeignKey(name = "car_owner_foreign_key"))
     private PersonEntity owner;
 
     @OneToMany(mappedBy = "car")
