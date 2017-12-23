@@ -7,6 +7,7 @@ import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
@@ -18,33 +19,27 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @Transactional
+@AllArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    private CarDao carDao;
-    private SalePropositionDao salePropDao;
-
-    public CarServiceImpl(CarDao carDao, SalePropositionDao salePropDao) {
-        this.carDao = carDao;
-        this.salePropDao = salePropDao;
-    }
+    final CarDao carDao;
+    final SalePropositionDao salePropDao;
 
     @Override
     public Car addCarForSale(Car car, SaleDetails saleDetails) {
         log.debug("Try to insert new Person into the database");
-        PersonEntity owner = PersonEntity.builder()
-                .firstName(saleDetails.getOwnerFirstName())
-                .lastName(saleDetails.getOwnerLastName())
-                .phoneNumber(saleDetails.getOwnerPhoneNumber())
-                .build();
+        PersonEntity owner = new PersonEntity();
+                owner.setFirstName(saleDetails.getOwnerFirstName());
+                owner.setLastName(saleDetails.getOwnerLastName());
+                owner.setPhoneNumber(saleDetails.getOwnerPhoneNumber());
 
         log.debug("Try to insert new Car into the database");
-        CarEntity carEntity = CarEntity.builder()
-                .brand(car.getBrand())
-                .color(car.getColor())
-                .owner(owner)
-                .year(car.getAge())
-                .plateNumber(car.getNumber())
-                .build();
+        CarEntity carEntity = new CarEntity();
+                carEntity.setBrand(car.getBrand());
+                carEntity.setColor(car.getColor());
+                carEntity.setOwner(owner);
+                carEntity.setYear(car.getAge());
+                carEntity.setPlateNumber(car.getNumber());
 
         log.debug("Try to insert new SaleProposition into the database");
         SalePropositionEntity propositionEntity = new SalePropositionEntity();
@@ -63,12 +58,12 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        return salePropDao.findByCar_IdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(sp -> convertToSaleDetails(sp)).findFirst();
+        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(this::convertToSaleDetails).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        if (salePropDao.deleteByCar_IdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
+        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }

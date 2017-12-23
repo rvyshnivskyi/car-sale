@@ -1,12 +1,14 @@
 package com.playtika.sales.domain;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
+import lombok.Getter;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
-@Value
+@Data
+@Getter
 @Builder
 public class Car {
     private Long id;

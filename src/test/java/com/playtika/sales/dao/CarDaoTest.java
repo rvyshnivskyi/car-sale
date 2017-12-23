@@ -1,16 +1,24 @@
 package com.playtika.sales.dao;
 
+import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseOperation;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import com.playtika.sales.dao.entity.CarEntity;
+import org.hamcrest.Matcher;
 import org.junit.Test;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.test.context.TestExecutionListeners;
+import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
+import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+@TestExecutionListeners(listeners = {DbUnitTestExecutionListener.class, DependencyInjectionTestExecutionListener.class,
+        TransactionalTestExecutionListener.class})
 public class CarDaoTest extends AbstractDaoTest<CarDao> {
 
     @Test
@@ -18,11 +26,10 @@ public class CarDaoTest extends AbstractDaoTest<CarDao> {
     public void allCarsAreReturned() throws Exception {
         List<CarEntity> result = dao.findAll();
         assertThat(result, hasSize(2));
-        assertThat(result.stream().map(CarEntity::getId).collect(Collectors.toList()), hasItems(2L, 4L));
-        assertThat(result.stream().map(CarEntity::getPlateNumber).collect(Collectors.toList()), hasItems("AA3295BB", "AA3296BB"));
-        assertThat(result.stream().map(CarEntity::getBrand).collect(Collectors.toList()), hasItems("BMW", "Audi"));
-        assertThat(result.stream().map(CarEntity::getYear).collect(Collectors.toList()), hasItems(2003, 2009));
-        assertThat(result.stream().map(CarEntity::getColor).collect(Collectors.toList()), hasItems("red", "yellow"));
+        assertThat(result, hasItems(
+                allCarEntityPropertiesMatcher(2L, "AA3295BB", "BMW", 2003, "red"),
+                allCarEntityPropertiesMatcher(4L, "AA3296BB", "Audi", 2009, "yellow")
+        ));
     }
 
     @Test
@@ -30,5 +37,14 @@ public class CarDaoTest extends AbstractDaoTest<CarDao> {
     public void findAllReturnEmptyListIfNoOneCarExist() throws Exception {
         List<CarEntity> result = dao.findAll();
         assertThat(result, empty());
+    }
+
+    Matcher<Object> allCarEntityPropertiesMatcher(Long id, String plateNumber, String brand, int year, String color) {
+        return allOf(
+                hasProperty("id", is(id)),
+                hasProperty("plateNumber", is(plateNumber)),
+                hasProperty("brand", is(brand)),
+                hasProperty("year", is(year)),
+                hasProperty("color", is(color)));
     }
 }

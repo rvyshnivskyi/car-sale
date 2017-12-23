@@ -1,15 +1,15 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.Data;
-import org.hibernate.annotations.DynamicInsert;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Data
-@DynamicInsert
+@Getter
+@Setter
 @Table(name = "sale_proposition")
 public class SalePropositionEntity {
     @Id

@@ -1,18 +1,14 @@
 package com.playtika.sales.dao.entity;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 
 import javax.persistence.*;
 import java.util.Set;
 
 @Entity
-@Data
-@Builder
-@AllArgsConstructor
-@NoArgsConstructor
+@Getter
+@Setter
 @Table(name = "car")
 public class CarEntity {
     @Id
@@ -25,7 +21,7 @@ public class CarEntity {
     private String color;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
-    @JoinColumn(name = "owner_id", foreignKey = @ForeignKey(name = "car_owner_foreign_key"))
+    @JoinColumn(name = "owner_id")
     private PersonEntity owner;
 
     @OneToMany(mappedBy = "car")

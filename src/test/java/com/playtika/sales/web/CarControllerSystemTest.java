@@ -57,11 +57,8 @@ public class CarControllerSystemTest {
 
     @Test
     public void addCarReturnCreatedCarId() throws Exception {
-        Long maxExistId = context.getBean(CarService.class)
-                .getAllCars().stream()
-                .mapToLong(Car::getId)
-                .max().getAsLong();
-        Long result = Long.valueOf(
+        long maxCarId = getMaxCarId();
+        long result = Long.valueOf(
                 mockMvc.perform(post("/cars?price=0.1&firstName=firstName&phone=1234&lastName=lastName")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(getCarJSON("4")))
@@ -70,7 +67,7 @@ public class CarControllerSystemTest {
                         .andReturn()
                         .getResponse()
                         .getContentAsString());
-        assertThat(result, greaterThan(maxExistId));
+        assertThat(result, greaterThan(maxCarId));
         context.getBean(CarService.class).deleteSaleDetails(result);
     }
 
@@ -95,11 +92,7 @@ public class CarControllerSystemTest {
 
     @Test
     public void deleteCarById() throws Exception {
-        Long maxExistId = context.getBean(CarService.class)
-                .getAllCars().stream()
-                .mapToLong(Car::getId)
-                .max().getAsLong();
-        mockMvc.perform(delete("/cars/" + maxExistId))
+        mockMvc.perform(delete("/cars/" + getMaxCarId()))
                 .andExpect(status().isOk());
         context.getBean(CarService.class)
                 .addCarForSale(generateCar("3"), generateSaleDetails());
@@ -119,6 +112,13 @@ public class CarControllerSystemTest {
             carService.addCarForSale(generateCar("1"), generateSaleDetails());
             carService.addCarForSale(generateCar("2"), generateSaleDetails());
         }
+    }
+
+    long getMaxCarId() {
+        return context.getBean(CarService.class)
+                .getAllCars().stream()
+                .mapToLong(Car::getId)
+                .max().getAsLong();
     }
 
     static Car generateCar(String number) {

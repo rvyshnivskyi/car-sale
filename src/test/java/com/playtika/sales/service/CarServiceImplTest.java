@@ -41,7 +41,7 @@ public class CarServiceImplTest {
 
     @Test
     public void addCarReturnInsertedCar() {
-        Long carId = 1L;
+        long carId = 1L;
         String carNumber = "aa1";
         when(propositionDao.save(notNull(SalePropositionEntity.class)))
                 .thenReturn(generatePropEntity(generateCarEntity(carId, new PersonEntity(), carNumber)));
@@ -64,7 +64,7 @@ public class CarServiceImplTest {
     @Test
     public void getCarSaleWithNotExistId() {
         long carId = 0L;
-        when(propositionDao.findByCar_IdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.findByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
                 .thenReturn(Collections.emptyList());
         Optional<SaleDetails> result = carService.getSaleDetails(carId);
         assertThat(result.isPresent(), is(false));
@@ -75,7 +75,7 @@ public class CarServiceImplTest {
         long carId = 1L;
         CarEntity returnedCarEntity = generateCarEntity(carId, generateOwnerEntity(), "11");
 
-        when(propositionDao.findByCar_IdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.findByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
                 .thenReturn(Arrays.asList(generatePropEntity(returnedCarEntity)));
         Optional<SaleDetails> result = carService.getSaleDetails(carId);
         assertThat(result.isPresent(), is(true));
@@ -85,7 +85,7 @@ public class CarServiceImplTest {
     @Test
     public void deleteCarDetailsReturnFalseWithNotExistCarId() {
         long carId = 2L;
-        when(propositionDao.deleteByCar_IdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.deleteByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
                 .thenReturn(0);
         boolean result = carService.deleteSaleDetails(carId);
         assertThat(result, is(false));
@@ -94,18 +94,18 @@ public class CarServiceImplTest {
     @Test
     public void deleteCarDetailsReturnTrueWithExistCarId() {
         long carId = 2L;
-        when(propositionDao.deleteByCar_IdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.deleteByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
                 .thenReturn(1);
         boolean result = carService.deleteSaleDetails(carId);
         assertThat(result, is(true));
     }
 
     private PersonEntity generateOwnerEntity() {
-        return PersonEntity.builder()
-                .firstName("firstName")
-                .lastName("lastName")
-                .phoneNumber("1234567")
-                .build();
+        PersonEntity pe = new PersonEntity();
+                pe.setFirstName("firstName");
+                pe.setLastName("lastName");
+                pe.setPhoneNumber("1234567");
+        return pe;
     }
 
     private SaleDetails generateSaleDetails(Long carId) {
@@ -118,14 +118,14 @@ public class CarServiceImplTest {
     }
 
     private CarEntity generateCarEntity(Long id, PersonEntity owner, String number) {
-        return CarEntity.builder()
-                .id(id)
-                .brand("BMW")
-                .color("red")
-                .owner(owner)
-                .plateNumber(number)
-                .year(2003)
-                .build();
+        CarEntity ce = new CarEntity();
+                ce.setId(id);
+                ce.setBrand("BMW");
+                ce.setColor("red");
+                ce.setOwner(owner);
+                ce.setPlateNumber(number);
+                ce.setYear(2003);
+        return ce;
     }
 
     private SalePropositionEntity generatePropEntity(CarEntity car) {
