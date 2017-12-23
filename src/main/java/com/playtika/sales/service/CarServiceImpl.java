@@ -38,7 +38,7 @@ public class CarServiceImpl implements CarService {
                 carEntity.setBrand(car.getBrand());
                 carEntity.setColor(car.getColor());
                 carEntity.setOwner(owner);
-                carEntity.setYear(car.getAge());
+                carEntity.setYear(car.getYear());
                 carEntity.setPlateNumber(car.getNumber());
 
         log.debug("Try to insert new SaleProposition into the database");
@@ -74,7 +74,7 @@ public class CarServiceImpl implements CarService {
     private Car convertToCar(CarEntity ce) {
         return Car.builder()
                 .id(ce.getId())
-                .age(ce.getYear())
+                .year(ce.getYear())
                 .brand(ce.getBrand())
                 .number(ce.getPlateNumber())
                 .color(ce.getColor()).build();

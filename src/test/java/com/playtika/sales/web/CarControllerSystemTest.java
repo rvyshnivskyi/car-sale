@@ -99,7 +99,7 @@ public class CarControllerSystemTest {
     }
 
     private String getCarJSON(final String number) {
-        return "{\"brand\":\"BMW\",\"color\":\"red\",\"age\":2009,\"number\":\"" + number + "\"}";
+        return "{\"brand\":\"BMW\",\"color\":\"red\",\"year\":2009,\"number\":\"" + number + "\"}";
     }
 
 
@@ -126,7 +126,7 @@ public class CarControllerSystemTest {
                 .brand("BMW")
                 .number(number)
                 .color("red")
-                .age(2009).build();
+                .year(2009).build();
     }
 
     static SaleDetails generateSaleDetails() {

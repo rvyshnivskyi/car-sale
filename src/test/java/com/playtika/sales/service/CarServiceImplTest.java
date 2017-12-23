@@ -141,6 +141,6 @@ public class CarServiceImplTest {
                 .color("red")
                 .number(number)
                 .brand("BMW")
-                .age(2003).build();
+                .year(2003).build();
     }
 }

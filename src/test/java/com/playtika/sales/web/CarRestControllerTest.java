@@ -166,7 +166,7 @@ public class CarRestControllerTest {
                 .param("phone", "1234")
                 .param("lastName", "lastName")
                 .contentType(APPLICATION_JSON_UTF8)
-                .content(carJSON.put("age", "-1").toString()))
+                .content(carJSON.put("year", "-1").toString()))
                 .andExpect(status().isBadRequest())
                 .andReturn();
         assertThat(result.getResolvedException().getClass(), typeCompatibleWith(MethodArgumentNotValidException.class));
@@ -177,7 +177,7 @@ public class CarRestControllerTest {
                 .brand("BMW")
                 .number(number)
                 .color("red")
-                .age(3).build();
+                .year(3).build();
     }
 
     private Car generateCarWithId(String number, long id) {
@@ -186,7 +186,7 @@ public class CarRestControllerTest {
                 .brand("BMW")
                 .number(number)
                 .color("red")
-                .age(3).build();
+                .year(3).build();
     }
 
     private SaleDetails generateSaleDetails() {
@@ -201,5 +201,5 @@ public class CarRestControllerTest {
         return carJSON.put("number", number).toString();
     }
 
-    JSONObject carJSON = new JSONObject("{\"brand\":\"BMW\",\"color\":\"red\",\"age\":3,\"number\":\"number\"}");
+    JSONObject carJSON = new JSONObject("{\"brand\":\"BMW\",\"color\":\"red\",\"year\":3,\"number\":\"number\"}");
 }
