@@ -2,20 +2,20 @@ package com.playtika.sales.web;
 
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
 import com.playtika.sales.service.CarService;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
-import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Arrays;
@@ -33,21 +33,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ActiveProfiles("test")
-@RunWith(MockitoJUnitRunner.class)
+@WebMvcTest(CarController.class)
+@RunWith(SpringRunner.class)
 public class CarRestControllerTest {
-    @Mock
+    @MockBean
     CarService service;
 
+    @Autowired
     MockMvc mockMvc;
 
     public CarRestControllerTest() throws JSONException {
-    }
-
-    @Before
-    public void setUp() throws Exception {
-        mockMvc = MockMvcBuilders
-                .standaloneSetup(new CarController(service))
-                .build();
     }
 
     @Test
@@ -73,7 +68,7 @@ public class CarRestControllerTest {
         String number = "1";
         Car returned = generateCarWithId(number, 1);
         when(service.addCarForSale(generateCar(number), generateSaleDetails()))
-                .thenReturn(returned).thenThrow(DataIntegrityViolationException.class);
+                .thenReturn(returned).thenThrow(new DuplicateCarSaleDetailsException(generateCar(number), new Exception()));
         mockMvc.perform(post("/cars?")
                 .param("price", "0.1")
                 .param("firstName", "firstName")
@@ -84,16 +79,14 @@ public class CarRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json("1"));
-        Exception resolvedException = mockMvc.perform(post("/cars?")
+        mockMvc.perform(post("/cars?")
                 .param("price", "0.1")
                 .param("firstName", "firstName")
                 .param("phone", "1234")
                 .param("lastName", "lastName")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getCarJSON(number)))
-                .andExpect(status().isConflict())
-                .andReturn().getResolvedException();
-        assertThat(resolvedException.getClass(), typeCompatibleWith(CarController.DuplicatePlateNumberException.class));
+                .andExpect(status().isConflict());
     }
 
     @Test
@@ -128,7 +121,7 @@ public class CarRestControllerTest {
         when(service.getSaleDetails(0)).thenReturn(empty());
         Exception resolved = mockMvc.perform(get("/cars/0/saleDetails"))
                 .andExpect(status().isNotFound()).andReturn().getResolvedException();
-        assertThat(resolved.getClass(), typeCompatibleWith(CarController.CarIdWasNotFoundException.class));
+        assertThat(resolved.getClass(), typeCompatibleWith(CarController.SaleDetailsWasNotFoundException.class));
     }
 
     @Test
