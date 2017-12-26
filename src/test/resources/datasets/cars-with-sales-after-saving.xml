@@ -1,0 +1,12 @@
+<dataset>
+    <person id="12" first_name="Roma" last_name="Vysh" city="Kyiv" phone_number="123456"/>
+    <person id="13" first_name="Ira" last_name="Dyakon" city="Kyiv" phone_number="123456"/>
+    <person id="14" first_name="Petia" last_name="Poroh" city="Vinnitsa" phone_number="228"/>
+    <car id="2" owner_id="13" plate_number="AA3295BB" brand="BMW" year="2003" color="red"/>
+    <car id="4" owner_id="12" plate_number="AA3296BB" brand="Audi" year="2009" color="yellow"/>
+    <car id="5" owner_id="14" plate_number="AA3297BB" brand="Opel" year="2014" color="blue"/>
+    <sale_proposition id="5" car_id="2" price="123.4" status="OPEN"/>
+    <sale_proposition id="6" car_id="4" price="2000" status="OPEN"/>
+    <sale_proposition id="7" car_id="5" price="3000" status="OPEN"/>
+    <offer/>
+</dataset>

@@ -1,99 +1,69 @@
 package com.playtika.sales.service;
 
+import com.playtika.sales.dao.CarDao;
+import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.dao.entity.CarEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
+import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Optional.of;
-
 @Slf4j
 @Service
 @Transactional
+@AllArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    @Autowired
-    protected EntityManager em;
-
-    public CarServiceImpl(EntityManager entityManager) {
-        em = entityManager;
-    }
+    final CarDao carDao;
+    final SalePropositionDao salePropDao;
 
     @Override
     public Car addCarForSale(Car car, SaleDetails saleDetails) {
         log.debug("Try to insert new Person into the database");
-        PersonEntity owner = PersonEntity.builder()
-                .firstName(saleDetails.getOwnerFirstName())
-                .lastName(saleDetails.getOwnerLastName())
-                .phoneNumber(saleDetails.getOwnerPhoneNumber())
-                .city("Default City")
-                .build();
+        PersonEntity owner = new PersonEntity();
+                owner.setFirstName(saleDetails.getOwnerFirstName());
+                owner.setLastName(saleDetails.getOwnerLastName());
+                owner.setPhoneNumber(saleDetails.getOwnerPhoneNumber());
 
         log.debug("Try to insert new Car into the database");
-        CarEntity carEntity = CarEntity.builder()
-                .brand(car.getBrand())
-                .color(car.getColor())
-                .owner(owner)
-                .year(car.getAge())
-                .plateNumber(car.getNumber())
-                .build();
+        CarEntity carEntity = new CarEntity();
+                carEntity.setBrand(car.getBrand());
+                carEntity.setColor(car.getColor());
+                carEntity.setOwner(owner);
+                carEntity.setYear(car.getAge());
+                carEntity.setPlateNumber(car.getNumber());
 
-        log.debug("Try to insert new SakeProposition into the database");
+        log.debug("Try to insert new SaleProposition into the database");
         SalePropositionEntity propositionEntity = new SalePropositionEntity();
         propositionEntity.setCar(carEntity);
         propositionEntity.setPrice(saleDetails.getPrice());
 
-        em.persist(propositionEntity);
-
-        car.setId(carEntity.getId());
-        return car;
+        return convertToCar(salePropDao.save(propositionEntity).getCar());
     }
 
     @Override
     public List<Car> getAllCars() {
-        Query query = em.createQuery("select c from CarEntity c");
-        List<CarEntity> cars = query.getResultList();
-        return cars.stream()
+        return carDao.findAll().stream()
                 .map(this::convertToCar)
                 .collect(Collectors.toList());
     }
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        Query query = em.createQuery(
-                "select sp from SalePropositionEntity sp inner join fetch sp.car as c " +
-                "where c.id = :carId and sp.status = :status");
-        query.setParameter("carId", id);
-        query.setParameter("status", SalePropositionEntity.Status.OPEN);
-
-        try {
-            return of(convertToSaleDetails((SalePropositionEntity)query.getSingleResult()));
-        } catch (NoResultException ex) {
-            return Optional.empty();
-        }
+        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(this::convertToSaleDetails).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        Query query = em.createQuery("delete from SalePropositionEntity sp where " +
-                "sp.car.id = :carId and sp.status = :status");
-
-        query.setParameter("carId", id);
-        query.setParameter("status", SalePropositionEntity.Status.OPEN);
-
-        if (query.executeUpdate() == 0){
+        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }
@@ -102,22 +72,20 @@ public class CarServiceImpl implements CarService {
     }
 
     private Car convertToCar(CarEntity ce) {
-        Car car = new Car();
-        car.setId(ce.getId());
-        car.setAge(ce.getYear());
-        car.setBrand(ce.getBrand());
-        car.setNumber(ce.getPlateNumber());
-        car.setColor(ce.getColor());
-        return car;
+        return Car.builder()
+                .id(ce.getId())
+                .age(ce.getYear())
+                .brand(ce.getBrand())
+                .number(ce.getPlateNumber())
+                .color(ce.getColor()).build();
     }
 
     private SaleDetails convertToSaleDetails(SalePropositionEntity spe) {
-        SaleDetails sd = new SaleDetails();
-        sd.setCarId(spe.getCar().getId());
-        sd.setOwnerPhoneNumber(spe.getCar().getOwner().getPhoneNumber());
-        sd.setOwnerFirstName(spe.getCar().getOwner().getFirstName());
-        sd.setOwnerLastName(spe.getCar().getOwner().getLastName());
-        sd.setPrice(spe.getPrice());
-        return sd;
+        return SaleDetails.builder()
+                .carId(spe.getCar().getId())
+                .ownerPhoneNumber(spe.getCar().getOwner().getPhoneNumber())
+                .ownerFirstName(spe.getCar().getOwner().getFirstName())
+                .ownerLastName(spe.getCar().getOwner().getLastName())
+                .price(spe.getPrice()).build();
     }
 }

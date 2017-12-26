@@ -18,9 +18,8 @@ public class OfferEntity {
     private Date date;
     private double price;
 
-    @Column(columnDefinition = "ENUM")
     @Enumerated(value = EnumType.STRING)
-    private Status status;
+    private Status status = Status.ACTIVE;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "sale_proposition_id")
@@ -30,7 +29,9 @@ public class OfferEntity {
     @JoinColumn(name = "buyer_id")
     private PersonEntity buyer;
 
-    public static enum Status {
-        ACTIVE, ACCEPTED, DECLINED;
+    public enum Status {
+        ACTIVE,
+        ACCEPTED,
+        DECLINED
     }
 }

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 
 import javax.persistence.*;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -17,18 +18,17 @@ public class SalePropositionEntity {
 
     private double price;
 
-    @Column(columnDefinition = "ENUM('OPEN','CLOSED')", insertable = false)
     @Enumerated(EnumType.STRING)
-    private Status status;
+    private Status status = Status.OPEN;
 
     @ManyToOne(cascade = CascadeType.PERSIST)
     @JoinColumn(name = "car_id")
     private CarEntity car;
 
-    @OneToMany(mappedBy = "sale", orphanRemoval = true)
-    private Set<OfferEntity> offers;
+    @OneToMany(mappedBy = "sale", cascade = {CascadeType.REMOVE, CascadeType.PERSIST})
+    private Set<OfferEntity> offers = new HashSet<>();
 
-    public static enum Status {
+    public enum Status {
         OPEN, CLOSED;
     }
 }
