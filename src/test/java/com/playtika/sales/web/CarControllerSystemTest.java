@@ -1,6 +1,5 @@
 package com.playtika.sales.web;
 
-import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
 import com.playtika.sales.service.CarService;
@@ -36,9 +35,6 @@ public class CarControllerSystemTest {
 
     @Autowired
     CarService service;
-
-    @Autowired
-    private SalePropositionDao salePropositionDao;
 
     @TestConfiguration
     public static class TestConfigurationContext {

@@ -3,13 +3,11 @@ package com.playtika.sales.domain;
 import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Data;
-import lombok.Getter;
 
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotBlank;
 
 @Data
-@Getter
 @Builder
 public class Car {
     @ApiModelProperty(notes = "The database generated car ID")

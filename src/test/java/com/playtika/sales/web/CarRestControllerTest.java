@@ -10,6 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
@@ -65,6 +66,34 @@ public class CarRestControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(APPLICATION_JSON_UTF8))
                 .andExpect(content().json("1"));
+    }
+
+    @Test
+    public void addCarReturnsConflictWhenDuplicatePlateNumberAndThrowsException() throws Exception {
+        String number = "1";
+        Car returned = generateCarWithId(number, 1);
+        when(service.addCarForSale(generateCar(number), generateSaleDetails()))
+                .thenReturn(returned).thenThrow(DataIntegrityViolationException.class);
+        mockMvc.perform(post("/cars?")
+                .param("price", "0.1")
+                .param("firstName", "firstName")
+                .param("phone", "1234")
+                .param("lastName", "lastName")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getCarJSON(number)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json("1"));
+        Exception resolvedException = mockMvc.perform(post("/cars?")
+                .param("price", "0.1")
+                .param("firstName", "firstName")
+                .param("phone", "1234")
+                .param("lastName", "lastName")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getCarJSON(number)))
+                .andExpect(status().isConflict())
+                .andReturn().getResolvedException();
+        assertThat(resolvedException.getClass(), typeCompatibleWith(CarController.DuplicatePlateNumberException.class));
     }
 
     @Test

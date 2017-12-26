@@ -7,6 +7,7 @@ import com.playtika.sales.dao.entity.CarEntity;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.test.context.TestExecutionListeners;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
@@ -31,6 +32,18 @@ public class CarDaoTest extends AbstractDaoTest<CarDao> {
                 allCarEntityPropertiesMatcher(4L, "AA3296BB", "Audi", 2009, "yellow")
         ));
     }
+
+    @Test(expected = DataIntegrityViolationException.class)
+    @DatabaseSetup(value = "/datasets/two-cars-with-sales.xml")
+    public void addCarThrowExceptionWhenCarPlateNumberDuplicates() throws Exception {
+        CarEntity ce = new CarEntity();
+        ce.setBrand("Volvo");
+        ce.setYear(1995);
+        ce.setColor("blue");
+        ce.setPlateNumber("AA3295BB");
+        dao.save(ce);
+    }
+
 
     @Test
     @DatabaseSetup(value = "/datasets/two-cars-with-sales.xml", type = DatabaseOperation.DELETE_ALL)

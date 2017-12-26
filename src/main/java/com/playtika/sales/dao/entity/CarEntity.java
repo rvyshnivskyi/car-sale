@@ -18,6 +18,7 @@ public class CarEntity {
     private Long id;
 
     @ApiModelProperty(notes = "Plate number of the car")
+    @Column(unique = true)
     private String plateNumber;
     @ApiModelProperty(notes = "Brand name of the car")
     private String brand;
