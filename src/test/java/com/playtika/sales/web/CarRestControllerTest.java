@@ -1,8 +1,13 @@
 package com.playtika.sales.web;
 
 import com.playtika.sales.domain.Car;
+import com.playtika.sales.domain.Offer;
+import com.playtika.sales.domain.Person;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.ActiveOfferWithThisIdWasNotFoundException;
+import com.playtika.sales.exception.CarWasNotFoundException;
 import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
+import com.playtika.sales.exception.SaleProposeNotFoundForThisCarException;
 import com.playtika.sales.service.CarService;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,6 +24,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Optional;
 
 import static java.util.Collections.emptyList;
@@ -87,6 +93,92 @@ public class CarRestControllerTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(getCarJSON(number)))
                 .andExpect(status().isConflict());
+    }
+
+    @Test
+    public void addOfferForSaleProposeReturnOfferId() throws Exception {
+        String buyerName = "Roma";
+        when(service.addOfferForSalePropose(generateOffer(buyerName), 1L))
+                .thenReturn(generateOfferWithId(buyerName, 1L));
+        mockMvc.perform(post("/cars/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getOfferJSON(buyerName)))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json("1"));
+    }
+
+    @Test
+    public void addOfferForSaleProposeReturnNotFoundStatusWhenNoSaleProposes() throws Exception {
+        String buyerName = "Roma";
+        when(service.addOfferForSalePropose(generateOffer(buyerName), 1L))
+                .thenThrow(new SaleProposeNotFoundForThisCarException(1L));
+        mockMvc.perform(post("/cars/1")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(getOfferJSON(buyerName)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void getAllActiveOffersReturnArraysOffers() throws Exception {
+        when(service.getAllActiveOffers(1L))
+                .thenReturn(Arrays.asList(generateOffer("Vasia"), generateOffer("Petia")));
+        mockMvc.perform(get("/cars/1/offers"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json("[" + getOfferJSON("Petia") + "," + getOfferJSON("Vasia") + "]"));
+    }
+
+    @Test
+    public void getAllActiveOffersReturnEmptyListWhenNoOneOfferForCarExist() throws Exception {
+        long carId = 2L;
+        when(service.getAllActiveOffers(carId))
+                .thenReturn(Collections.emptyList());
+        mockMvc.perform(get("/cars/" + carId + "/offers"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json("[]"));
+    }
+
+    @Test
+    public void acceptActiveOfferReturnNewCarOwnerId() throws Exception {
+        long offerId = 1;
+        Long personId = 2L;
+        when(service.acceptActiveOffer(offerId))
+                .thenReturn(generatePerson(personId));
+        mockMvc.perform(put("/offers/" + offerId))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(APPLICATION_JSON_UTF8))
+                .andExpect(content().json(personId.toString()));
+    }
+
+    @Test
+    public void acceptActiveOfferReturnNotFoundWhenNoActiveOfferWithCurrentId() throws Exception {
+        long offerId = 1;
+        when(service.acceptActiveOffer(offerId))
+                .thenThrow(ActiveOfferWithThisIdWasNotFoundException.class);
+        mockMvc.perform(put("/offers/" + offerId))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void carOwnerSuccessfullyReturned() throws Exception {
+        long carId = 1L;
+        when(service.getCarOwner(carId))
+                .thenReturn(generatePerson(1L));
+        mockMvc.perform(get("/cars/" + carId + "/owner"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().json("{\"firstName\":\"Roma\",\"phoneNumber\":\"1234567\",\"lastName\":\"Vysh\"}"));
+    }
+
+    @Test
+    public void getCarOwnerReturnedNotFoundWhenCarWithThisIdNotExist() throws Exception {
+        long carId = 1L;
+        when(service.getCarOwner(carId))
+                .thenThrow(CarWasNotFoundException.class);
+        mockMvc.perform(get("/cars/" + carId + "/owner"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -194,6 +286,15 @@ public class CarRestControllerTest {
         assertThat(result.getResolvedException().getClass(), typeCompatibleWith(MethodArgumentNotValidException.class));
     }
 
+    private Person generatePerson(Long personId) {
+        return Person.builder()
+                .firstName("Roma")
+                .lastName("Vysh")
+                .phoneNumber("1234567")
+                .id(personId)
+                .build();
+    }
+
     private Car generateCar(String number) {
         return Car.builder()
                 .brand("BMW")
@@ -217,6 +318,29 @@ public class CarRestControllerTest {
                 .ownerFirstName("firstName")
                 .ownerPhoneNumber("1234")
                 .ownerLastName("lastName").build();
+    }
+
+    private Offer generateOfferWithId(String buyerName, long id) {
+        return Offer.builder()
+                .buyerFirstName(buyerName)
+                .buyerLastName("Vyshnivskyi")
+                .buyerPhoneNumber("380960000000")
+                .price(2000.2)
+                .id(id)
+                .build();
+    }
+
+    private Offer generateOffer(String buyerName) {
+        return Offer.builder()
+                .buyerFirstName(buyerName)
+                .buyerLastName("Vyshnivskyi")
+                .buyerPhoneNumber("380960000000")
+                .price(2000.2)
+                .build();
+    }
+
+    private String getOfferJSON(String buyerName) {
+        return "{\"price\":2000.2,\"buyerFirstName\":\"" + buyerName + "\",\"buyerPhoneNumber\":\"380960000000\",\"buyerLastName\":\"Vyshnivskyi\"}";
     }
 
     private String getCarJSON(final String number) throws JSONException {

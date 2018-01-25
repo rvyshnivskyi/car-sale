@@ -1,25 +1,18 @@
 package com.playtika.sales.dao;
 
-import com.github.springtestdbunit.DbUnitTestExecutionListener;
 import com.github.springtestdbunit.annotation.DatabaseOperation;
 import com.github.springtestdbunit.annotation.DatabaseSetup;
 import com.playtika.sales.dao.entity.CarEntity;
+import com.playtika.sales.dao.entity.PersonEntity;
 import org.hamcrest.Matcher;
 import org.junit.Test;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.test.context.TestExecutionListeners;
-import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
-import org.springframework.test.context.transaction.TransactionalTestExecutionListener;
 
 import java.util.List;
 
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestExecutionListeners(listeners = {DbUnitTestExecutionListener.class, DependencyInjectionTestExecutionListener.class,
-        TransactionalTestExecutionListener.class})
 public class CarDaoTest extends AbstractDaoTest<CarDao> {
 
     @Test
@@ -44,6 +37,19 @@ public class CarDaoTest extends AbstractDaoTest<CarDao> {
         dao.save(ce);
     }
 
+    @Test
+    @DatabaseSetup(value = "/datasets/two-cars-with-sales.xml")
+    public void carOwnerSuccessfullyReturned() throws Exception {
+        PersonEntity owner = dao.findOne(2L).getOwner();
+        assertThat(owner, allOf(hasProperty("id", is(13L)), hasProperty("firstName", is("Ira"))));
+    }
+
+    @Test
+    @DatabaseSetup(value = "/datasets/two-cars-with-sales.xml")
+    public void findOneReturnedNullIfCarNotExist() throws Exception {
+        CarEntity car = dao.findOne(3L);
+        assertThat(car, nullValue());
+    }
 
     @Test
     @DatabaseSetup(value = "/datasets/two-cars-with-sales.xml", type = DatabaseOperation.DELETE_ALL)

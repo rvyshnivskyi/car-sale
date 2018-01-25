@@ -1,6 +1,7 @@
 package com.playtika.sales.web;
 
 import com.playtika.sales.domain.Car;
+import com.playtika.sales.domain.Offer;
 import com.playtika.sales.domain.SaleDetails;
 import com.playtika.sales.service.CarService;
 import org.junit.Before;
@@ -12,6 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.Rollback;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.web.servlet.MockMvc;
@@ -76,14 +78,57 @@ public class CarControllerSystemTest {
     }
 
     @Test
-    public void getCarSaleDetailsByCarId() throws Exception {
-        long minExistId = service.getAllCars().stream()
-                .mapToLong(Car::getId)
-                .min().getAsLong();
-        mockMvc.perform(get("/cars/" + minExistId + "/saleDetails"))
+    public void getAllActiveOffersReturnArrayOfOffers() throws Exception {
+        mockMvc.perform(get("/cars/" + getMaxCarId() + "/offers"))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
-                .andExpect(content().json("{\"price\":0.1,\"ownerFirstName\":\"firstName\",\"ownerPhoneNumber\":\"1234\",\"ownerLastName\":\"lastName\",\"carId\":1}"));
+                .andExpect(content().json("[" + getOfferJSON("Vova") + "," + getOfferJSON("Tolia") + "]"));
+    }
+
+    @Rollback
+    @Test
+    public void offerAccepterReturnNewOwnerId() throws Exception {
+        Long maxOfferId = service.getAllActiveOffers(getMinCarId()).stream()
+                .mapToLong(Offer::getId)
+                .max().getAsLong();
+        Long result = Long.valueOf(
+                mockMvc.perform(put("/offers/" + maxOfferId))
+                        .andExpect(status().isOk())
+                        .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString());
+        assertThat(result, greaterThan(3L));
+    }
+
+    @Test
+    public void carOwnerSuccessfullyReturns() throws Exception {
+       mockMvc.perform(get("/cars/" + getMaxCarId() + "/owner"))
+               .andExpect(status().isOk())
+               .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+               .andExpect(content().json("{\"firstName\":\"firstName\",\"phoneNumber\":\"1234\",\"lastName\":\"lastName\"}"));
+    }
+
+    @Test
+    public void getCarSaleDetailsByCarId() throws Exception {
+        mockMvc.perform(get("/cars/" + getMaxCarId() + "/saleDetails"))
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON_UTF8))
+                .andExpect(content().json("{\"price\":0.1,\"ownerFirstName\":\"firstName\",\"ownerPhoneNumber\":\"1234\",\"ownerLastName\":\"lastName\"}"));
+    }
+
+    @Test
+    public void addOfferForSaleProposeReturnOfferId() throws Exception {
+        long result = Long.valueOf(
+                mockMvc.perform(post("/cars/" + getMaxCarId())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(getOfferJSON("Roma")))
+                        .andExpect(status().isOk())
+                        .andReturn()
+                        .getResponse()
+                        .getContentAsString()
+        );
+        assertThat(result, greaterThan(0L));
     }
 
     @Test
@@ -92,6 +137,10 @@ public class CarControllerSystemTest {
                 .andExpect(status().isOk());
         context.getBean(CarService.class)
                 .addCarForSale(generateCar("3"), generateSaleDetails());
+    }
+
+    private String getOfferJSON(String buyerName) {
+        return "{\"price\":2001.2,\"buyerFirstName\":\"" + buyerName + "\",\"buyerPhoneNumber\":\"380960000000\",\"buyerLastName\":\"Vyshnivskyi\"}";
     }
 
     private String getCarJSON(final String number) {
@@ -105,16 +154,34 @@ public class CarControllerSystemTest {
 
         @Override
         public void run(String... strings) throws Exception {
-            carService.addCarForSale(generateCar("1"), generateSaleDetails());
-            carService.addCarForSale(generateCar("2"), generateSaleDetails());
+            Long minCarId = carService.addCarForSale(generateCar("1"), generateSaleDetails()).getId();
+            Long maxCarId = carService.addCarForSale(generateCar("2"), generateSaleDetails()).getId();
+            carService.addOfferForSalePropose(generateOffer("Vova"), minCarId);
+            carService.addOfferForSalePropose(generateOffer("Tolia"), minCarId);
+            carService.addOfferForSalePropose(generateOffer("Vova"), maxCarId);
+            carService.addOfferForSalePropose(generateOffer("Tolia"), maxCarId);
         }
     }
 
+    static Offer generateOffer(String name) {
+        return Offer.builder()
+                .price(2001.2)
+                .buyerLastName("Vyshnivskyi")
+                .buyerPhoneNumber("380960000000")
+                .buyerFirstName(name)
+                .build();
+    }
+
     long getMaxCarId() {
-        return context.getBean(CarService.class)
-                .getAllCars().stream()
+        return service.getAllCars().stream()
                 .mapToLong(Car::getId)
                 .max().getAsLong();
+    }
+
+    private long getMinCarId() {
+        return service.getAllCars().stream()
+                .mapToLong(Car::getId)
+                .min().getAsLong();
     }
 
     static Car generateCar(String number) {
