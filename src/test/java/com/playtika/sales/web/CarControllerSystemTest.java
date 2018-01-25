@@ -1,6 +1,5 @@
 package com.playtika.sales.web;
 
-import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
 import com.playtika.sales.service.CarService;
@@ -36,9 +35,6 @@ public class CarControllerSystemTest {
 
     @Autowired
     CarService service;
-
-    @Autowired
-    private SalePropositionDao salePropositionDao;
 
     @TestConfiguration
     public static class TestConfigurationContext {
@@ -99,7 +95,7 @@ public class CarControllerSystemTest {
     }
 
     private String getCarJSON(final String number) {
-        return "{\"brand\":\"BMW\",\"color\":\"red\",\"age\":2009,\"number\":\"" + number + "\"}";
+        return "{\"brand\":\"BMW\",\"color\":\"red\",\"year\":2009,\"number\":\"" + number + "\"}";
     }
 
 
@@ -126,7 +122,7 @@ public class CarControllerSystemTest {
                 .brand("BMW")
                 .number(number)
                 .color("red")
-                .age(2009).build();
+                .year(2009).build();
     }
 
     static SaleDetails generateSaleDetails() {

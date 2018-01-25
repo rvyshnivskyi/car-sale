@@ -15,6 +15,7 @@ public class CarEntity {
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
+    @Column(unique = true)
     private String plateNumber;
     private String brand;
     private int year;

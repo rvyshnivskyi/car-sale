@@ -7,11 +7,13 @@ import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -48,6 +50,18 @@ public class CarServiceImplTest {
 
         Car result = carService.addCarForSale(generateCar(null, "aa1"), generateSaleDetails(carId));
         assertThat(result, is(generateCar(carId, carNumber)));
+    }
+
+    @Test(expected = DuplicateCarSaleDetailsException.class)
+    public void addCarThrowsExceptionWhenCarDuplicated() {
+        long carId = 1L;
+        String carNumber = "aa1";
+        when(propositionDao.save(notNull(SalePropositionEntity.class)))
+                .thenReturn(generatePropEntity(generateCarEntity(carId, new PersonEntity(), carNumber)))
+                .thenThrow(DataIntegrityViolationException.class);
+
+        carService.addCarForSale(generateCar(null, "aa1"), generateSaleDetails(carId));
+        carService.addCarForSale(generateCar(null, "aa1"), generateSaleDetails(carId));
     }
 
     @Test
@@ -141,6 +155,6 @@ public class CarServiceImplTest {
                 .color("red")
                 .number(number)
                 .brand("BMW")
-                .age(2003).build();
+                .year(2003).build();
     }
 }

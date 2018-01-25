@@ -7,8 +7,10 @@ import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -38,7 +40,7 @@ public class CarServiceImpl implements CarService {
                 carEntity.setBrand(car.getBrand());
                 carEntity.setColor(car.getColor());
                 carEntity.setOwner(owner);
-                carEntity.setYear(car.getAge());
+                carEntity.setYear(car.getYear());
                 carEntity.setPlateNumber(car.getNumber());
 
         log.debug("Try to insert new SaleProposition into the database");
@@ -46,7 +48,13 @@ public class CarServiceImpl implements CarService {
         propositionEntity.setCar(carEntity);
         propositionEntity.setPrice(saleDetails.getPrice());
 
-        return convertToCar(salePropDao.save(propositionEntity).getCar());
+        CarEntity result;
+        try {
+            result = salePropDao.save(propositionEntity).getCar();
+        } catch (DataIntegrityViolationException ex) {
+            throw new DuplicateCarSaleDetailsException(car, ex);
+        }
+        return convertToCar(result);
     }
 
     @Override
@@ -74,7 +82,7 @@ public class CarServiceImpl implements CarService {
     private Car convertToCar(CarEntity ce) {
         return Car.builder()
                 .id(ce.getId())
-                .age(ce.getYear())
+                .year(ce.getYear())
                 .brand(ce.getBrand())
                 .number(ce.getPlateNumber())
                 .color(ce.getColor()).build();
