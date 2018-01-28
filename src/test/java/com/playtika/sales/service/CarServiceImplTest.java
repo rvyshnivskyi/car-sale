@@ -6,7 +6,9 @@ import com.playtika.sales.dao.entity.CarEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
 import com.playtika.sales.domain.Car;
+import com.playtika.sales.domain.Person;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.CarWasNotFoundException;
 import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,10 +18,11 @@ import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import static com.playtika.sales.dao.entity.SalePropositionEntity.Status.OPEN;
+import static java.util.Collections.emptyList;
 import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Matchers.notNull;
@@ -65,6 +68,23 @@ public class CarServiceImplTest {
     }
 
     @Test
+    public void carOwnerSuccessfullyReturned() throws Exception {
+        Long carId = 1L;
+        when(carDao.findOne(carId))
+                .thenReturn(generateCarEntity(carId, generatePersonEntity(), "AA3265"));
+        Person result = carService.getCarOwner(carId);
+        assertThat(result, is(generatePersonWithId(null)));
+    }
+
+    @Test(expected = CarWasNotFoundException.class)
+    public void getCarOwnerReturnedExceptionWhenCarNotExist() throws Exception {
+        Long carId = 1L;
+        when(carDao.findOne(carId))
+                .thenReturn(null);
+        carService.getCarOwner(carId);
+    }
+
+    @Test
     public void getAllCarsReturnCarList() {
         CarEntity firstCarEntity = generateCarEntity(1L, new PersonEntity(), "11");
         CarEntity secondCarEntity = generateCarEntity(2L, new PersonEntity(), "22");
@@ -78,8 +98,8 @@ public class CarServiceImplTest {
     @Test
     public void getCarSaleWithNotExistId() {
         long carId = 0L;
-        when(propositionDao.findByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
-                .thenReturn(Collections.emptyList());
+        when(propositionDao.findByCarIdAndStatus(carId, OPEN))
+                .thenReturn(emptyList());
         Optional<SaleDetails> result = carService.getSaleDetails(carId);
         assertThat(result.isPresent(), is(false));
     }
@@ -87,9 +107,9 @@ public class CarServiceImplTest {
     @Test
     public void getCarSaleReturnSaleDetails() {
         long carId = 1L;
-        CarEntity returnedCarEntity = generateCarEntity(carId, generateOwnerEntity(), "11");
+        CarEntity returnedCarEntity = generateCarEntity(carId, generatePersonEntity(), "11");
 
-        when(propositionDao.findByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.findByCarIdAndStatus(carId, OPEN))
                 .thenReturn(Arrays.asList(generatePropEntity(returnedCarEntity)));
         Optional<SaleDetails> result = carService.getSaleDetails(carId);
         assertThat(result.isPresent(), is(true));
@@ -99,7 +119,7 @@ public class CarServiceImplTest {
     @Test
     public void deleteCarDetailsReturnFalseWithNotExistCarId() {
         long carId = 2L;
-        when(propositionDao.deleteByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.deleteByCarIdAndStatus(carId, OPEN))
                 .thenReturn(0);
         boolean result = carService.deleteSaleDetails(carId);
         assertThat(result, is(false));
@@ -108,18 +128,27 @@ public class CarServiceImplTest {
     @Test
     public void deleteCarDetailsReturnTrueWithExistCarId() {
         long carId = 2L;
-        when(propositionDao.deleteByCarIdAndStatus(carId, SalePropositionEntity.Status.OPEN))
+        when(propositionDao.deleteByCarIdAndStatus(carId, OPEN))
                 .thenReturn(1);
         boolean result = carService.deleteSaleDetails(carId);
         assertThat(result, is(true));
     }
 
-    private PersonEntity generateOwnerEntity() {
+    private PersonEntity generatePersonEntity() {
         PersonEntity pe = new PersonEntity();
-                pe.setFirstName("firstName");
-                pe.setLastName("lastName");
-                pe.setPhoneNumber("1234567");
+        pe.setFirstName("firstName");
+        pe.setLastName("lastName");
+        pe.setPhoneNumber("1234567");
         return pe;
+    }
+
+    private Person generatePersonWithId(Long id) {
+        return Person.builder()
+                .id(id)
+                .phoneNumber("1234567")
+                .lastName("lastName")
+                .firstName("firstName")
+                .build();
     }
 
     private SaleDetails generateSaleDetails(Long carId) {

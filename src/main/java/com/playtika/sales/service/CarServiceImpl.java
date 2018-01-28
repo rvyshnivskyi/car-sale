@@ -5,8 +5,11 @@ import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.dao.entity.CarEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
+import com.playtika.sales.dao.entity.SalePropositionEntity.Status;
 import com.playtika.sales.domain.Car;
+import com.playtika.sales.domain.Person;
 import com.playtika.sales.domain.SaleDetails;
+import com.playtika.sales.exception.CarWasNotFoundException;
 import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,22 +21,24 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.playtika.sales.dao.entity.SalePropositionEntity.Status.OPEN;
+
 @Slf4j
 @Service
 @Transactional
 @AllArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    final CarDao carDao;
-    final SalePropositionDao salePropDao;
+    private final CarDao carDao;
+    private final SalePropositionDao salePropDao;
 
     @Override
     public Car addCarForSale(Car car, SaleDetails saleDetails) {
         log.debug("Try to insert new Person into the database");
         PersonEntity owner = new PersonEntity();
-                owner.setFirstName(saleDetails.getOwnerFirstName());
-                owner.setLastName(saleDetails.getOwnerLastName());
-                owner.setPhoneNumber(saleDetails.getOwnerPhoneNumber());
+        owner.setFirstName(saleDetails.getOwnerFirstName());
+        owner.setLastName(saleDetails.getOwnerLastName());
+        owner.setPhoneNumber(saleDetails.getOwnerPhoneNumber());
 
         log.debug("Try to insert new Car into the database");
         CarEntity carEntity = new CarEntity();
@@ -66,17 +71,37 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) .stream().map(this::convertToSaleDetails).findFirst();
+        return getSaleProposeByCarIdAndStatus(id, OPEN).stream().map(this::convertToSaleDetails).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
+        if (salePropDao.deleteByCarIdAndStatus(id, OPEN) < 1) {
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }
         log.info("Sale of car with id = [{}] was deleted successfully", id);
         return true;
+    }
+
+    @Override
+    public Person getCarOwner(long carId) {
+        return convertToPerson(Optional.ofNullable(carDao.findOne(carId))
+                .orElseThrow(() -> new CarWasNotFoundException(carId))
+                .getOwner());
+    }
+
+    private List<SalePropositionEntity> getSaleProposeByCarIdAndStatus(long id, Status status) {
+        return salePropDao.findByCarIdAndStatus(id, status);
+    }
+
+    private Person convertToPerson(PersonEntity personEntity) {
+        return Person.builder()
+                .id(personEntity.getId())
+                .phoneNumber(personEntity.getPhoneNumber())
+                .firstName(personEntity.getFirstName())
+                .lastName(personEntity.getLastName())
+                .build();
     }
 
     private Car convertToCar(CarEntity ce) {
