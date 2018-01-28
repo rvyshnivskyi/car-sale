@@ -5,7 +5,6 @@ import com.github.springtestdbunit.annotation.ExpectedDatabase;
 import com.github.springtestdbunit.assertion.DatabaseAssertionMode;
 import com.playtika.sales.dao.entity.OfferEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
-import com.playtika.sales.dao.entity.SalePropositionEntity;
 import org.junit.Test;
 import org.springframework.test.annotation.Commit;
 
@@ -13,6 +12,8 @@ import java.sql.Date;
 import java.util.List;
 import java.util.Optional;
 
+import static com.playtika.sales.dao.entity.OfferEntity.Status.*;
+import static com.playtika.sales.dao.entity.SalePropositionEntity.Status.CLOSED;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.*;
 
@@ -21,14 +22,14 @@ public class OfferDaoTest extends AbstractDaoTest<OfferDao> {
     @Test
     @DatabaseSetup("/datasets/two-cars-with-sales-and-four-offers.xml")
     public void findAllActiveOffersByCarIdReturnEmptyListWhenNoOffers() throws Exception {
-        List<OfferEntity> result = dao.findAllOffersByCarIdAndStatus(1L, OfferEntity.Status.ACTIVE);
+        List<OfferEntity> result = dao.findAllOffersByCarIdAndStatus(1L, ACTIVE);
         assertThat(result, empty());
     }
 
     @Test
     @DatabaseSetup("/datasets/two-cars-with-sales-and-four-offers.xml")
     public void offersPerCarSuccessfullyReturned() throws Exception {
-        List<OfferEntity> result = dao.findAllOffersByCarIdAndStatus(2, OfferEntity.Status.ACTIVE);
+        List<OfferEntity> result = dao.findAllOffersByCarIdAndStatus(2, ACTIVE);
         assertThat(result, hasSize(2));
         assertThat(result, hasItems(hasProperty("id", is(1L)), hasProperty("id", is(2L))));
     }
@@ -36,24 +37,24 @@ public class OfferDaoTest extends AbstractDaoTest<OfferDao> {
     @Test
     @DatabaseSetup(value = "/datasets/two-cars-with-sales-after-adding-offer.xml")
     public void offerByIdAndStatusCanReturnEmptyOptional() throws Exception {
-        Optional<OfferEntity> result1 = dao.findFirstByIdAndStatus(2L, OfferEntity.Status.ACTIVE);
-        Optional<OfferEntity> result2 = dao.findFirstByIdAndStatus(1L, OfferEntity.Status.DECLINED);
+        Optional<OfferEntity> result1 = dao.findFirstByIdAndStatus(2L, ACTIVE);
+        Optional<OfferEntity> result2 = dao.findFirstByIdAndStatus(1L, DECLINED);
         assertThat(result1.isPresent(), is(false));
         assertThat(result2.isPresent(), is(false));
     }
 
     @Test
     @DatabaseSetup(value = "/datasets/two-cars-with-two-active-offers.xml")
-    @ExpectedDatabase(value = "/datasets/two-cars-with-two-active-offers-after-acception-offer.xml"/*, assertionMode = DatabaseAssertionMode.NON_STRICT*/)
+    @ExpectedDatabase(value = "/datasets/two-cars-with-two-active-offers-after-acception-offer.xml")
     @Commit
     public void offerSuccessfullyAcceptedAndDataModified() throws Exception {
-        OfferEntity offer = dao.findFirstByIdAndStatus(1L, OfferEntity.Status.ACTIVE).get();
-        offer.setStatus(OfferEntity.Status.ACCEPTED);
-        offer.getSale().setStatus(SalePropositionEntity.Status.CLOSED);
+        OfferEntity offer = dao.findFirstByIdAndStatus(1L, ACTIVE).get();
+        offer.setStatus(ACCEPTED);
+        offer.getSale().setStatus(CLOSED);
         offer.getSale().getCar().setOwner(offer.getBuyer());
         offer.getSale().getOffers().stream()
-                .filter(o -> o.getStatus() != OfferEntity.Status.ACCEPTED)
-                .forEach(o -> o.setStatus(OfferEntity.Status.DECLINED));
+                .filter(o -> o.getStatus() != ACCEPTED)
+                .forEach(o -> o.setStatus(DECLINED));
         dao.save(offer);
     }
 

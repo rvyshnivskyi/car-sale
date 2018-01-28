@@ -4,6 +4,7 @@ import com.playtika.sales.domain.Car;
 import com.playtika.sales.domain.Offer;
 import com.playtika.sales.domain.SaleDetails;
 import com.playtika.sales.service.CarService;
+import com.playtika.sales.service.OfferService;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -36,7 +37,10 @@ public class CarControllerSystemTest {
     MockMvc mockMvc;
 
     @Autowired
-    CarService service;
+    CarService carService;
+
+    @Autowired
+    OfferService offerService;
 
     @TestConfiguration
     public static class TestConfigurationContext {
@@ -88,7 +92,7 @@ public class CarControllerSystemTest {
     @Rollback
     @Test
     public void offerAccepterReturnNewOwnerId() throws Exception {
-        Long maxOfferId = service.getAllActiveOffers(getMinCarId()).stream()
+        Long maxOfferId = offerService.getAllActiveOffers(getMinCarId()).stream()
                 .mapToLong(Offer::getId)
                 .max().getAsLong();
         Long result = Long.valueOf(
@@ -152,14 +156,17 @@ public class CarControllerSystemTest {
         @Autowired
         private CarService carService;
 
+        @Autowired
+        private OfferService offerService;
+
         @Override
         public void run(String... strings) throws Exception {
             Long minCarId = carService.addCarForSale(generateCar("1"), generateSaleDetails()).getId();
             Long maxCarId = carService.addCarForSale(generateCar("2"), generateSaleDetails()).getId();
-            carService.addOfferForSalePropose(generateOffer("Vova"), minCarId);
-            carService.addOfferForSalePropose(generateOffer("Tolia"), minCarId);
-            carService.addOfferForSalePropose(generateOffer("Vova"), maxCarId);
-            carService.addOfferForSalePropose(generateOffer("Tolia"), maxCarId);
+            offerService.addOfferForSalePropose(generateOffer("Vova"), minCarId);
+            offerService.addOfferForSalePropose(generateOffer("Tolia"), minCarId);
+            offerService.addOfferForSalePropose(generateOffer("Vova"), maxCarId);
+            offerService.addOfferForSalePropose(generateOffer("Tolia"), maxCarId);
         }
     }
 
@@ -173,13 +180,13 @@ public class CarControllerSystemTest {
     }
 
     long getMaxCarId() {
-        return service.getAllCars().stream()
+        return carService.getAllCars().stream()
                 .mapToLong(Car::getId)
                 .max().getAsLong();
     }
 
     private long getMinCarId() {
-        return service.getAllCars().stream()
+        return carService.getAllCars().stream()
                 .mapToLong(Car::getId)
                 .min().getAsLong();
     }

@@ -1,34 +1,27 @@
 package com.playtika.sales.service;
 
 import com.playtika.sales.dao.CarDao;
-import com.playtika.sales.dao.OfferDao;
 import com.playtika.sales.dao.SalePropositionDao;
 import com.playtika.sales.dao.entity.CarEntity;
-import com.playtika.sales.dao.entity.OfferEntity;
 import com.playtika.sales.dao.entity.PersonEntity;
 import com.playtika.sales.dao.entity.SalePropositionEntity;
+import com.playtika.sales.dao.entity.SalePropositionEntity.Status;
 import com.playtika.sales.domain.Car;
-import com.playtika.sales.domain.Offer;
 import com.playtika.sales.domain.Person;
 import com.playtika.sales.domain.SaleDetails;
-import com.playtika.sales.exception.ActiveOfferWithThisIdWasNotFoundException;
 import com.playtika.sales.exception.CarWasNotFoundException;
 import com.playtika.sales.exception.DuplicateCarSaleDetailsException;
-import com.playtika.sales.exception.SaleProposeNotFoundForThisCarException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import javax.validation.constraints.NotBlank;
-import java.sql.Date;
-import java.util.Calendar;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-import static java.util.Comparator.comparing;
+import static com.playtika.sales.dao.entity.SalePropositionEntity.Status.OPEN;
 
 @Slf4j
 @Service
@@ -36,17 +29,16 @@ import static java.util.Comparator.comparing;
 @AllArgsConstructor
 public class CarServiceImpl implements CarService {
 
-    final CarDao carDao;
-    final SalePropositionDao salePropDao;
-    private OfferDao offerDao;
+    private final CarDao carDao;
+    private final SalePropositionDao salePropDao;
 
     @Override
     public Car addCarForSale(Car car, SaleDetails saleDetails) {
         log.debug("Try to insert new Person into the database");
-        PersonEntity owner = generatePersonEntity(
-                saleDetails.getOwnerFirstName(),
-                saleDetails.getOwnerLastName(),
-                saleDetails.getOwnerPhoneNumber());
+        PersonEntity owner = new PersonEntity();
+        owner.setFirstName(saleDetails.getOwnerFirstName());
+        owner.setLastName(saleDetails.getOwnerLastName());
+        owner.setPhoneNumber(saleDetails.getOwnerPhoneNumber());
 
         log.debug("Try to insert new Car into the database");
         CarEntity carEntity = new CarEntity();
@@ -79,59 +71,17 @@ public class CarServiceImpl implements CarService {
 
     @Override
     public Optional<SaleDetails> getSaleDetails(long id) {
-        return getSaleProposeByCarIdAndStatus(id).stream().map(this::convertToSaleDetails).findFirst();
+        return getSaleProposeByCarIdAndStatus(id, OPEN).stream().map(this::convertToSaleDetails).findFirst();
     }
 
     @Override
     public boolean deleteSaleDetails(long id) {
-        if (salePropDao.deleteByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN) < 1){
+        if (salePropDao.deleteByCarIdAndStatus(id, OPEN) < 1) {
             log.warn("Sale of car with id = [{}] wasn't found, maybe it was removed before", id);
             return false;
         }
         log.info("Sale of car with id = [{}] was deleted successfully", id);
         return true;
-    }
-
-    @Override
-    public Offer addOfferForSalePropose(Offer offer, long carId) {
-        log.debug("Try to insert new Person into the database");
-        PersonEntity personEntity = generatePersonEntity(
-                offer.getBuyerFirstName(),
-                offer.getBuyerLastName(),
-                offer.getBuyerPhoneNumber()
-        );
-
-        log.debug("Try to insert new Offer into the database");
-        OfferEntity offerEntity = new OfferEntity();
-        offerEntity.setPrice(offer.getPrice());
-        offerEntity.setDate(new Date(Calendar.getInstance().getTime().getTime()));
-        offerEntity.setBuyer(personEntity);
-        offerEntity.setSale(getSaleProposeByCarIdAndStatus(carId).stream()
-                .findFirst()
-                .orElseThrow(() -> new SaleProposeNotFoundForThisCarException(carId)));
-
-        return convertToOffer(offerDao.save(offerEntity));
-    }
-
-    @Override
-    public List<Offer> getAllActiveOffers(long carId) {
-        return offerDao.findAllOffersByCarIdAndStatus(carId, OfferEntity.Status.ACTIVE).stream()
-                .map(this::convertToOffer)
-                .sorted(comparing(Offer::getPrice).reversed())
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public Person acceptActiveOffer(long offerId) {
-        OfferEntity offer = offerDao.findFirstByIdAndStatus(offerId, OfferEntity.Status.ACTIVE)
-                .orElseThrow(() -> new ActiveOfferWithThisIdWasNotFoundException(offerId));
-        offer.setStatus(OfferEntity.Status.ACCEPTED);
-        offer.getSale().setStatus(SalePropositionEntity.Status.CLOSED);
-        offer.getSale().getCar().setOwner(offer.getBuyer());
-        offer.getSale().getOffers().stream()
-                .filter(o -> o.getStatus() != OfferEntity.Status.ACCEPTED)
-                .forEach(o -> o.setStatus(OfferEntity.Status.DECLINED));
-        return convertToPerson(offerDao.save(offer).getSale().getCar().getOwner());
     }
 
     @Override
@@ -141,27 +91,8 @@ public class CarServiceImpl implements CarService {
                 .getOwner());
     }
 
-    private List<SalePropositionEntity> getSaleProposeByCarIdAndStatus(long id) {
-        return salePropDao.findByCarIdAndStatus(id, SalePropositionEntity.Status.OPEN);
-    }
-
-    private PersonEntity generatePersonEntity(@NotBlank String ownerFirstName, String ownerLastName, @NotBlank String ownerPhoneNumber) {
-        PersonEntity pe = new PersonEntity();
-        pe.setFirstName(ownerFirstName);
-        pe.setLastName(ownerLastName);
-        pe.setPhoneNumber(ownerPhoneNumber);
-        return pe;
-    }
-
-    private Offer convertToOffer(OfferEntity offer) {
-        return Offer.builder()
-                .id(offer.getId())
-                .buyerFirstName(offer.getBuyer().getFirstName())
-                .buyerLastName(offer.getBuyer().getLastName())
-                .buyerPhoneNumber(offer.getBuyer().getPhoneNumber())
-                .price(offer.getPrice())
-                .saleProposeId(offer.getSale().getId())
-                .build();
+    private List<SalePropositionEntity> getSaleProposeByCarIdAndStatus(long id, Status status) {
+        return salePropDao.findByCarIdAndStatus(id, status);
     }
 
     private Person convertToPerson(PersonEntity personEntity) {

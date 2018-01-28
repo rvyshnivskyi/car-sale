@@ -26,7 +26,4 @@ public class Offer {
 
     @ApiModelProperty(notes = "The first name of car buyer")
     private String buyerLastName;
-
-    @ApiModelProperty(notes = "ID of sale proposition for which specific offer was created")
-    private Long saleProposeId;
 }
